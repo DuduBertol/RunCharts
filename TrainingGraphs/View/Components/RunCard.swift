@@ -9,13 +9,12 @@ import SwiftUI
 
 struct RunCard: View {
     
-    @State var date: Date = Date()
+    @State var date: Date 
     @State var durationMin: Int
     @State var distanceKm: Double
     @State var pace: Double
     
     var body: some View {
-//        ZStack{
             HStack(spacing: 8){
                 Spacer()
                 
@@ -34,34 +33,15 @@ struct RunCard: View {
                     Text("\(pace.format2F()) min/Km")
                         .font(.footnote)
                     Spacer()
-                    Text(date, format: Date.FormatStyle(date: .numeric))
+                    Text(date, format: Date.FormatStyle(date: .abbreviated))
                         .font(.footnote)
                 }
+                Spacer()
             }
             .frame(maxHeight: 75)
-//            .padding(8)
-//            .background(Color(.systemGray5))
-//            .padding(.horizontal, 8)
-            
-//            HStack{
-//                Spacer()
-//                VStack{
-//                    Circle()
-//                        .frame(height: 13)
-//                    Spacer()
-//                    Circle()
-//                        .frame(height: 13)
-//                }
-//                .frame(maxHeight: 100)
-//                .foregroundStyle(.white)
-//                Spacer()
-//            }
-//            
-//        }
     }
 }
 
 #Preview {
-//    RunCard(date: .constant(Date()), durationMin: .constant(20), distanceKm: .constant(3))
     RunCard(date: Date(), durationMin: 20, distanceKm: 3, pace: 5.5)
 }

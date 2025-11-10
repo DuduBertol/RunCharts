@@ -14,4 +14,11 @@ extension Double {
         
         return String(format: "%02d:%02d", hours, minutes)
     }
+    
+    func formatTimeHourMin() -> String {
+        let hours = Int(self) / 60
+        let minutes = Int(self) % 60
+        
+        return String(format: "%02dh%02dm", hours, minutes)
+    }
 }

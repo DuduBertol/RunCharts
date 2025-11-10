@@ -51,7 +51,10 @@ struct GraphView: View {
     
     var body: some View {
         VStack(spacing: 32){
-            Text("Training Graphs")
+            Text("Graphs")
+                .font(.title)
+                .bold()
+                .foregroundStyle(.opacity(0.5))
             
             ScrollView(.horizontal, showsIndicators: false){
                 
@@ -59,7 +62,7 @@ struct GraphView: View {
                 HStack(spacing: 12) {
                     ForEach(RunUnits.allCases, id: \.self) { unit in
                         Button{
-                            withAnimation(.spring(response: 0.3)) {
+                            withAnimation() {
                                 selectedRunUnit = unit
                             }
                         } label: {
@@ -92,13 +95,13 @@ struct GraphView: View {
             }
             
             
-            Chart(runs) { run in //Chart deve ter um ForEach interno
+            Chart(runs) { run in
                 //LINE
                 LineMark(
                     x: .value("Date", run.date),
                     y: .value("Value", selectedRunUnit.value(of: run))
                 )
-                .foregroundStyle(selectedRunUnit.color.gradient) //pq gradient?
+                .foregroundStyle(selectedRunUnit.color)
                 .lineStyle(StrokeStyle(lineWidth: 3))
                 .interpolationMethod(.catmullRom)
                 
@@ -107,12 +110,15 @@ struct GraphView: View {
                     x: .value("Date", run.date),
                     y: .value("Value", selectedRunUnit.value(of: run))
                 )
+                .interpolationMethod(.catmullRom)
                 .foregroundStyle(
-                    LinearGradient(
-                        colors: [selectedRunUnit.color.opacity(0.3), selectedRunUnit.color.opacity(0.0)],
-                        startPoint: .top,
-                        endPoint: .bottom
-                    )
+                    //o fato de ter que calcular o gradiente dá o bug da animation
+                    selectedRunUnit.color.opacity(0.25)
+//                    LinearGradient(
+//                        colors: [selectedRunUnit.color.opacity(0.3), selectedRunUnit.color.opacity(0.0)],
+//                        startPoint: .top,
+//                        endPoint: .bottom
+//                    )
                 )
                 
                 //POINT
@@ -145,17 +151,29 @@ struct GraphView: View {
             
             HStack(spacing: 16){
                 statsView(
-                    title: "Média",
+                    title: "Average",
                     value: calculateAverage(),
                     icon: "chart.bar.fill"
+                )
+                statsView(
+                    title: "Better",
+                    value: calculateBetter(),
+                    icon: "arrow.up.circle.fill"
+                )
+                statsView(
+                    title: "Last",
+                    value: calculateLast(),
+                    icon: "clock.fill"
                 )
             }
         }
         .padding()
         .background(Color(.systemBackground))
         .cornerRadius(16)
-        .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 4)
+//        .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 4)
         
+        
+        Spacer()
     }
     
     
@@ -172,6 +190,7 @@ struct GraphView: View {
                     .foregroundStyle(.secondary)
                 Text(value)
                     .font(.headline)
+                    
             }
         }
         .frame(maxWidth: .infinity)
@@ -184,6 +203,26 @@ struct GraphView: View {
         let values = runs.map { selectedRunUnit.value(of: $0) }
         let average = values.reduce(0, +) / Double(values.count)
         return String(format: "%.1f %@", average, selectedRunUnit.unit)
+    }
+    
+    func calculateBetter() -> String {
+        let values = runs.map { selectedRunUnit.value(of: $0) }
+        let better: Double
+        
+        
+        if selectedRunUnit == .pace {
+            better = values.min() ?? 0
+        } else {
+            better = values.max() ?? 0
+        }
+        
+        return String(format: "%.1f %@", better, selectedRunUnit.unit)
+    }
+    
+    func calculateLast() -> String {
+        guard let last = runs.last else { return "N/A" }
+        let value = selectedRunUnit.value(of: last)
+        return String(format: "%.1f %@", value, selectedRunUnit.unit)
     }
 
 }

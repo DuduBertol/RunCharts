@@ -12,21 +12,20 @@ struct ContentView: View {
     @Environment(\.modelContext) private var context
     
     var body: some View {
-        TabView{
-            Tab("", systemImage: "plus"){
-                NewTrainView()
+        NavigationStack{
+            TabView{
+                Tab("", systemImage: "plus"){
+                    NewRunView()
+                }
+                Tab("", systemImage: "chart.xyaxis.line"){
+                    GraphView()
+                }
+                Tab("", systemImage: "clock"){
+                    HistoryView()
+                }
             }
-            Tab("", systemImage: "chart.xyaxis.line"){
-                GraphView()
-            }
-            Tab("", systemImage: "bag.badge.plus"){
-                GraphPlusView()
-            }
-            Tab("", systemImage: "clock"){
-                HistoryView()
-            }
+            .modelContainer(for: Run.self)
         }
-        .modelContainer(for: Run.self)
     }
 }
 

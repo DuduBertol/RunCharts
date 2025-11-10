@@ -1,22 +1,19 @@
 //
-//  NewTrain.swift
+//  EditRunView.swift
 //  TrainingGraphs
 //
-//  Created by Eduardo Bertol on 29/10/25.
+//  Created by Eduardo Bertol on 05/11/25.
 //
 
 import SwiftUI
 import SwiftData
 
-struct NewTrainView: View {
+struct EditRunView: View {
+    
     @Environment(\.modelContext) private var context
+    @Environment(\.dismiss) private var dismiss
+    @Bindable var run: Run
     
-//    @StateObject var vm = NewTrainViewModel()
-    
-    @State var date: Date = Date()
-    @State var durationMin: Double = 0
-    @State var distanceKm: Double = 0
-
     @State var isPickerDatePresented: Bool = false
     @State var isPickerDurationPresented: Bool = false
     @State var isPickerDistancePresented: Bool = false
@@ -24,27 +21,18 @@ struct NewTrainView: View {
     
     @State var showConfirmDialog: Bool = false
     
-    
-    
     var body: some View {
-        
         NavigationStack{
             Form{
-                
-                
                 Section("Date") {
-//                    DatePicker("Select a Date", selection: $date)
-//                        .labelsHidden()
                     HStack{
-                        
                         Button{
                             isPickerDatePresented = true
                         } label: {
-                            Text(date, format: Date.FormatStyle(date: .abbreviated, time: .shortened))
-//                            Text(date.formatted())
+                            Text(run.date, format: Date.FormatStyle(date: .abbreviated, time: .shortened))
                         }
                         .sheet(isPresented: $isPickerDatePresented) {
-                            DatePicker("Select a Date", selection: $date)
+                            DatePicker("Select a Date", selection: $run.date)
                                 .labelsHidden()
                                 .datePickerStyle(.wheel)
                                 .presentationDetents([
@@ -52,7 +40,7 @@ struct NewTrainView: View {
                                 ])
                         }
                         
-
+                        
                         Spacer()
                         Image(systemName: "chevron.down")
                     }
@@ -63,12 +51,12 @@ struct NewTrainView: View {
                         Button{
                             isPickerDurationPresented = true
                         } label: {
-                            Text("\(durationMin.formatTime()) min")
+                            Text("\(Double(run.durationMin).formatTimeHourMin())")
                         }
                         .sheet(isPresented: $isPickerDurationPresented) {
-                            Picker("Set Distance (km)", selection: $durationMin) {
-                                ForEach(0..<501, id: \.self) { min in
-                                    Text("\(min) min").tag(Double(min))
+                            Picker("Set Distance (km)", selection: $run.durationMin) {
+                                ForEach(0..<241, id: \.self) { min in
+                                    Text("\(Double(min).formatTimeHourMin())").tag(Double(min))
                                 }
                             }
                             .pickerStyle(.wheel)
@@ -86,10 +74,10 @@ struct NewTrainView: View {
                         Button{
                             isPickerDistancePresented = true
                         } label: {
-                            Text(String(format: "%.2f km", distanceKm))
+                            Text(String(format: "%.2f km", run.distanceKm))
                         }
                         .sheet(isPresented: $isPickerDistancePresented) {
-                            Picker("Set Distance (km)", selection: $distanceKm) {
+                            Picker("Set Distance (km)", selection: $run.distanceKm) {
                                 ForEach(fractionalDistances, id: \.self) { kms in
                                     Text(String(format: "%.2f km", kms))
                                         .tag(Double(kms))
@@ -105,58 +93,58 @@ struct NewTrainView: View {
                     }
                 }
                 
-                
-                
-                Section("Run Data"){
-                    VStack(alignment: .leading){
-                        Text("**\(String(format: "%.2f", distanceKm))** km")
+                Section("Run Data") {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("**\(String(format: "%.2f", run.distanceKm))** km")
                             .font(.title)
-                        Text("**\(durationMin.formatTime())** min\n")
+                        Text("\(Double(run.durationMin).formatTimeHourMin())")
                             .font(.title)
-                        Text(date, format: Date.FormatStyle(date: .abbreviated, time: .shortened))
+                        Text("**\(String(format: "%.2f", run.pace))** min/km")
+                            .font(.headline)
+                        Text(run.date, format: Date.FormatStyle(date: .abbreviated, time: .shortened))
+                            .foregroundStyle(.secondary)
                     }
                 }
                 
-                HStack{
+                // ⭐ Botão para salvar
+                HStack {
                     Spacer()
-                    Button{
-                        context.insert(
-                            Run(
-                                date: date,
-                                durationMin: Int(durationMin),
-                                distanceKm: distanceKm
-                            )
-                        )
-                        
-                        // Salvar explicitamente
-                         do {
-                             try context.save()
-                         } catch {
-                             print("Erro ao salvar: \(error)")
-                         }
-                         
-                         // Limpar os campos
-                         date = Date()
-                         durationMin = 0
-                         distanceKm = 0
-                         
-                         // Mostrar confirmação
-                         showConfirmDialog = true
+                    Button {
+                        saveChanges()
                     } label: {
-                        Text("Create New Run")
+                        Text("Save Changes")
                     }
-                    .alert("Successfully Created Run!", isPresented: $showConfirmDialog) {}
-                    
+                    .disabled(run.distanceKm == 0 || run.durationMin == 0)
                     Spacer()
                 }
             }
-            .navigationTitle("Create New Run")
+            .navigationTitle("Edit Run")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") {
+                        dismiss()
+                    }
+                }
+            }
+            .alert("Successfully Updated Run!", isPresented: $showConfirmDialog) {
+                Button("OK") {
+                    dismiss()
+                }
+            }
         }
     }
+    
+    private func saveChanges() {
+    do {
+        try context.save()
+        showConfirmDialog = true
+    } catch {
+        print("Erro ao salvar alterações: \(error)")
+    }
+}
 }
 
 #Preview {
-    NewTrainView()
+    EditRunView(run: Run(durationMin: 10, distanceKm: 2))
 }
-
-
