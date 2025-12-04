@@ -76,7 +76,7 @@ struct ViewGraficosComFiltros: View {
                     HStack(spacing: 12) {
                         ForEach(PeriodoFiltro.allCases, id: \.self) { periodo in
                             Button {
-                                withAnimation(.spring(response: 0.3)) {
+                                withAnimation() {
                                     periodoSelecionado = periodo
                                 }
                             } label: {

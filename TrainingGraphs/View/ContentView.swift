@@ -17,12 +17,17 @@ struct ContentView: View {
                 Tab("", systemImage: "plus"){
                     NewRunView()
                 }
+                .accessibilityLabel("New Run")
+                
                 Tab("", systemImage: "chart.xyaxis.line"){
                     GraphView()
                 }
+                .accessibilityLabel("Run Graphs")
+                
                 Tab("", systemImage: "clock"){
                     HistoryView()
                 }
+                .accessibilityLabel("Run History")
             }
         }
     }

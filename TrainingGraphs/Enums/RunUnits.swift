@@ -16,7 +16,7 @@ enum RunUnits: String, CaseIterable {
     var unit: String {
         switch self {
         case .distance: return "km"
-        case .durationMin: return "min"
+        case .durationMin: return "hr:min"
         case .pace: return "min/km"
         }
     }
