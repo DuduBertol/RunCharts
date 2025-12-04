@@ -10,223 +10,175 @@ import SwiftData
 import Charts
 
 
-
 struct GraphView: View {
     @Environment(\.modelContext) private var context
-//    @Query(sort: \Run.date) private var runs: [Run]
-    let runs = Run.mockArrayRuns()
+    // Em produção, use @Query. Para teste, use o mock:
+    let allRuns = Run.mockArrayRuns()
     
     @StateObject var vm = GraphViewModel()
-    
     @Environment(\.dynamicTypeSize) var dynamicTypeSize
     
     var body: some View {
-        ScrollView{
-            VStack(spacing: 32){
+        // Obter os dados filtrados pela ViewModel
+        let currentRuns = vm.filteredRuns(allRuns)
+        
+        ScrollView {
+            VStack(spacing: 32) { // Aumentei um pouco o espaçamento
                 Text("Graphs")
                     .font(.title)
                     .bold()
                     .foregroundStyle(.opacity(0.5))
                 
-                VStack{
-                    
-                    //MARK: - Unit Selector
-                    ViewThatFits{
-                        
-                        HStack(spacing: 12) {
-                            ForEach(RunUnits.allCases, id: \.self) { unit in
-                                Button{
-                                    withAnimation() {
-                                        vm.selectedRunUnit = unit
-                                    }
-                                } label: {
-                                    HStack(spacing: 8){
-                                        Circle()
-                                            .fill(unit.color)
-                                            .frame(width: 8, height: 8)
-                                        
-                                        Text(unit.rawValue)
-                                            .font(.subheadline.weight(.medium))
-                                    }
-                                    .padding(.horizontal, 16)
-                                    .padding(.vertical, 10)
-                                    .background(vm.selectedRunUnit == unit ? unit.color.opacity(0.2) : Color(.systemGray6))
-                                    .cornerRadius(20)
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 20)
-                                            .stroke(
-                                                vm.selectedRunUnit == unit ? unit.color : Color.clear,
-                                                lineWidth: 2
-                                            )
-                                    )
-                                }
-                                .buttonStyle(.plain)
-                            }
-                        }
-                        .padding(.horizontal, 4)
-                        .frame(minHeight: 50)
-                        
-                        VStack(spacing: 12) {
-                            ForEach(RunUnits.allCases, id: \.self) { unit in
-                                Button{
-                                    withAnimation() {
-                                        vm.selectedRunUnit = unit
-                                    }
-                                } label: {
-                                    HStack(spacing: 8){
-                                        Circle()
-                                            .fill(unit.color)
-                                            .frame(width: 8, height: 8)
-                                        
-                                        Text(unit.rawValue)
-                                            .font(.subheadline.weight(.medium))
-                                    }
-                                    .padding(.horizontal, 16)
-                                    .padding(.vertical, 10)
-                                    .background(vm.selectedRunUnit == unit ? unit.color.opacity(0.2) : Color(.systemGray6))
-                                    .cornerRadius(20)
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 20)
-                                            .stroke(
-                                                vm.selectedRunUnit == unit ? unit.color : Color.clear,
-                                                lineWidth: 2
-                                            )
-                                    )
-                                }
-                                .buttonStyle(.plain)
-                            }
-                        }
-                        .padding(.horizontal, 4)
-                        .frame(minHeight: 50)
+                
+                // 1. Picker de Intervalo (7D, 1M, etc)
+                Picker("Time Range", selection: $vm.selectedTimeRange) {
+                    ForEach(GraphTimeRange.allCases) { range in
+                        Text(range.rawValue).tag(range)
                     }
+                }
+                .pickerStyle(.segmented)
+                
+                // 2. O Stepper de Data (Navegação)
+                DateRangeStepper(vm: vm)
+                
+                // 3. Seletor de Unidade (Distância, Tempo, Pace)
+                // (Mudei levemente para ViewThatFits para não quebrar em telas pequenas)
+                unitSelector
+                
+                // 4. O Gráfico
+                if currentRuns.isEmpty {
+                    ContentUnavailableView("No runs in this period", systemImage: "chart.xyaxis.line")
+                        .frame(height: 280)
+                } else {
+                    chartView(runs: currentRuns)
                 }
                 
-                //MARK: - Chart
-                Chart(runs) { run in
-                    //LINE
-                    LineMark(
-                        x: .value("Date", run.date),
-                        y: .value("Value", vm.selectedRunUnit.value(of: run))
-                    )
-                    .foregroundStyle(vm.selectedRunUnit.color)
-                    .lineStyle(StrokeStyle(lineWidth: 3))
-                    .interpolationMethod(.catmullRom)
-                    
-                    //AREA
-                    AreaMark(
-                        x: .value("Date", run.date),
-                        yStart: .value("Base", vm.getChartBaseline(for: runs)),
-                        yEnd: .value("Value", vm.selectedRunUnit.value(of: run))
-                    )
-                    .interpolationMethod(.catmullRom)
-                    .foregroundStyle(vm.selectedRunUnit.color.opacity(0.25))
-                    
-                    //POINT
-                    PointMark(
-                        x: .value("Date", run.date),
-                        y: .value("Value", vm.selectedRunUnit.value(of: run))
-                    )
-                    .foregroundStyle(vm.selectedRunUnit.color)
-                    .symbolSize(80)
-                    
-                }
-                .chartXAxis{
-                    AxisMarks(values: .automatic) { value in
-                        AxisGridLine()
-                        AxisValueLabel{
-                            if let date = value.as(Date.self) {
-                                VStack(spacing: 0) {
-                                    Text(date, format: .dateTime.day())
-                                        .font(.footnote)
-                                        .bold()
-                                    if dynamicTypeSize <= .large{
-                                        Text(date, format: .dateTime.month(.abbreviated))
-                                            .font(.caption2)
-                                            .textCase(.uppercase)
-                                            .foregroundStyle(.secondary)
-                                    }
-                                }
-                                .offset(x: -12)
-                            }
-                        }
-                    }
-                }
-                .chartYAxis{
-                    AxisMarks(position: .leading) { value in
-                        AxisGridLine()
-                        AxisValueLabel {
-                            if let val = value.as(Double.self) {
-                                VStack{
-                                    Text(vm.getValueForMetric(val))
-                                        .font(.footnote)
-                                        .bold()
-                                    if dynamicTypeSize <= .large{
-                                        Text(vm.selectedRunUnit.unit)
-                                            .font(.caption2)
-                                            .textCase(.uppercase)
-                                            .foregroundStyle(.secondary)
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-                .chartYScale(domain: .automatic(includesZero: false, reversed: vm.selectedRunUnit == .pace))
-                .frame(minHeight: 280)
-                .padding(.vertical)
-                
-                
-                //MARK: - Stats
-                ViewThatFits{
-                    HStack(spacing: 16){
-                        statsView(
-                            title: "Average",
-                            value: vm.calculateAverage(for: runs),
-                            icon: "chart.bar.fill"
-                        )
-                        statsView(
-                            title: "Best",
-                            value: vm.calculateBest(for: runs),
-                            icon: "arrow.up.circle.fill"
-                        )
-                        statsView(
-                            title: "Last",
-                            value: vm.calculateLast(for: runs),
-                            icon: "clock.fill"
-                        )
-                    }
-                    
-                    VStack(spacing: 16){
-                        statsView(
-                            title: "Average",
-                            value: vm.calculateAverage(for: runs),
-                            icon: "chart.bar.fill"
-                        )
-                        statsView(
-                            title: "Best",
-                            value: vm.calculateBest(for: runs),
-                            icon: "arrow.up.circle.fill"
-                        )
-                        statsView(
-                            title: "Last",
-                            value: vm.calculateLast(for: runs),
-                            icon: "clock.fill"
-                        )
-                    }
-                }
+                // 5. Stats
+                statsSection(runs: currentRuns)
             }
             .padding()
-            .background(Color(.systemBackground))
-            .cornerRadius(16)
-            
-            
-            Spacer()
         }
     }
     
+    // MARK: - Subviews para organizar
     
-    //MARK: - Funcs
-    @ViewBuilder
+    var unitSelector: some View {
+        HStack(spacing: 12) {
+            ForEach(RunUnits.allCases, id: \.self) { unit in
+                Button {
+                    withAnimation { vm.selectedRunUnit = unit }
+                } label: {
+                    HStack(spacing: 6) {
+                        Circle().fill(unit.color).frame(width: 6, height: 6)
+                        Text(unit.rawValue).font(.subheadline.weight(.medium))
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .background(vm.selectedRunUnit == unit ? unit.color.opacity(0.2) : Color(.systemGray6))
+                    .cornerRadius(20)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 20)
+                            .stroke(vm.selectedRunUnit == unit ? unit.color : Color.clear, lineWidth: 2)
+                    )
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading) // Alinha a esquerda
+    }
+    
+    func chartView(runs: [Run]) -> some View {
+        Chart(runs) { run in
+            // LINE
+            LineMark(
+                x: .value("Date", run.date),
+                y: .value("Value", vm.selectedRunUnit.value(of: run))
+            )
+            .foregroundStyle(vm.selectedRunUnit.color)
+            .lineStyle(StrokeStyle(lineWidth: 3))
+            .interpolationMethod(.catmullRom)
+            
+            // AREA
+            AreaMark(
+                x: .value("Date", run.date),
+                yStart: .value("Base", vm.getChartBaseline(for: runs)),
+                yEnd: .value("Value", vm.selectedRunUnit.value(of: run))
+            )
+            .interpolationMethod(.catmullRom)
+            .foregroundStyle(vm.selectedRunUnit.color.opacity(0.25))
+            
+            // POINT
+            PointMark(
+                x: .value("Date", run.date),
+                y: .value("Value", vm.selectedRunUnit.value(of: run))
+            )
+            .foregroundStyle(vm.selectedRunUnit.color)
+            .symbolSize(40) // Reduzi um pouco o tamanho
+        }
+        // --- EIXO X DINÂMICO ---
+        .chartXAxis {
+            AxisMarks(values: .automatic) { value in
+                AxisGridLine()
+                AxisTick()
+                AxisValueLabel {
+                    if let date = value.as(Date.self) {
+                        // Formatação condicional
+                        switch vm.selectedTimeRange {
+                        case .week:
+                            // Se for semana, mostra Dia da Semana (Seg, Ter)
+                            VStack(spacing: 0) {
+                                Text(date, format: .dateTime.weekday(.abbreviated))
+                                    .font(.caption2)
+                                    .bold()
+                                Text(date, format: .dateTime.day())
+                                    .font(.caption2)
+                                    .foregroundStyle(.secondary)
+                            }
+                        case .month, .threeMonths:
+                            // Se for Mês, mostra dia numérico (01, 05, 10)
+                            Text(date, format: .dateTime.day())
+                                .font(.caption2)
+                        case .sixMonths, .year:
+                            // Se for ano, mostra o Mês (Jan, Fev)
+                            Text(date, format: .dateTime.month(.narrow))
+                                .font(.caption2)
+                        }
+                    }
+                }
+            }
+        }
+        .chartYAxis {
+            AxisMarks(position: .leading) { value in
+                AxisGridLine()
+                AxisValueLabel {
+                    if let val = value.as(Double.self) {
+                        Text(vm.getValueForMetric(val))
+                            .font(.caption2)
+                            .bold()
+                    }
+                }
+            }
+        }
+        .chartYScale(domain: .automatic(includesZero: false, reversed: vm.selectedRunUnit == .pace))
+        .frame(height: 250)
+    }
+    
+    func statsSection(runs: [Run]) -> some View {
+        ViewThatFits{
+            HStack(spacing: 16) {
+                statsView(title: "Avg", value: vm.calculateAverage(for: runs), icon: "chart.bar.fill")
+                statsView(title: "Best", value: vm.calculateBest(for: runs), icon: "trophy.fill")
+                statsView(title: "Last", value: vm.calculateLast(for: runs), icon: "clock.arrow.circlepath")
+            }
+            
+            VStack(spacing: 16) {
+                statsView(title: "Avg", value: vm.calculateAverage(for: runs), icon: "chart.bar.fill")
+                statsView(title: "Best", value: vm.calculateBest(for: runs), icon: "trophy.fill")
+                statsView(title: "Last", value: vm.calculateLast(for: runs), icon: "clock.arrow.circlepath")
+            }
+        }
+    }
+    
     func statsView(title: String, value: String, icon: String) -> some View {
         VStack(spacing: 8){
             Image(systemName: icon)
@@ -251,10 +203,8 @@ struct GraphView: View {
         .cornerRadius(12)
         .accessibilityElement(children: .combine)
     }
-    
-        
-    
 }
+
 
 #Preview {
     GraphView()

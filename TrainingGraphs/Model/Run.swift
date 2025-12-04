@@ -48,80 +48,111 @@ extension Run {
             Run(durationMin: 60, distanceKm: 1),
         ]
     }
+}
+
+extension Run {
     
     static func mockArrayRuns() -> [Run] {
         [
-            // --- HOJE E ÚLTIMOS 7 DIAS (24 Nov - 01 Dez) ---
+            // ==========================================
+            // 📅 "HOJE" (DATA BASE DO MOCK: 01/DEZ/2025)
+            // ==========================================
+            
+            // --- 7 DIAS (Visível em: 7D, 1M, 3M, 6M, 1Y) ---
             Run(
-                date: Date.dateCreator(year: 2025, month: 12, day: 1), // Hoje
+                date: Date.dateCreator(year: 2025, month: 12, day: 1), // Hoje simulado
                 durationMin: 45,
                 distanceKm: 8.0
             ),
             Run(
-                date: Date.dateCreator(year: 2025, month: 11, day: 29), // 2 dias atrás
+                date: Date.dateCreator(year: 2025, month: 11, day: 29), // Sexta-feira
                 durationMin: 60,
                 distanceKm: 10.0
             ),
             Run(
-                date: Date.dateCreator(year: 2025, month: 11, day: 26), // 5 dias atrás
+                date: Date.dateCreator(year: 2025, month: 11, day: 27), // Quarta-feira
                 durationMin: 30,
                 distanceKm: 5.0
             ),
             
-            // --- ÚLTIMOS 15 DIAS (09 Nov - 23 Nov) ---
-            // Estas aparecerão no filtro de 15, 30 e 60, mas NÃO no de 7
+            // --- 1 MÊS (Visível em: 1M, 3M, 6M, 1Y) ---
+            // Datas entre 01/Nov e 24/Nov
             Run(
                 date: Date.dateCreator(year: 2025, month: 11, day: 20),
-                durationMin: 90, // Longão
+                durationMin: 90, // Longão de feriado
                 distanceKm: 15.0
             ),
             Run(
-                date: Date.dateCreator(year: 2025, month: 11, day: 17),
+                date: Date.dateCreator(year: 2025, month: 11, day: 15),
                 durationMin: 50,
                 distanceKm: 9.0
             ),
-
-            // --- ÚLTIMOS 30 DIAS (01 Nov - 16 Nov) ---
-            // Estas aparecerão no filtro de 30 e 60, mas NÃO no de 15
             Run(
-                date: Date.dateCreator(year: 2025, month: 11, day: 10),
-                durationMin: 55,
-                distanceKm: 10.0
-            ),
-            Run(
-                date: Date.dateCreator(year: 2025, month: 11, day: 5),
+                date: Date.dateCreator(year: 2025, month: 11, day: 8),
                 durationMin: 40,
                 distanceKm: 7.0
             ),
             
-            // --- ÚLTIMOS 60 DIAS (Outubro) ---
-            // Estas aparecerão APENAS no filtro de 60 dias
+            // --- 3 MESES (Visível em: 3M, 6M, 1Y) ---
+            // Datas em Setembro e Outubro
             Run(
-                date: Date.dateCreator(year: 2025, month: 10, day: 25),
-                durationMin: 120, // Meia Maratona treino
+                date: Date.dateCreator(year: 2025, month: 10, day: 31), // Halloween Run
+                durationMin: 55,
+                distanceKm: 10.0
+            ),
+            Run(
+                date: Date.dateCreator(year: 2025, month: 10, day: 12),
+                durationMin: 120, // Meia Maratona Treino
                 distanceKm: 21.0
             ),
             Run(
-                date: Date.dateCreator(year: 2025, month: 10, day: 15),
-                durationMin: 60,
-                distanceKm: 11.0
-            ),
-            Run(
-                date: Date.dateCreator(year: 2025, month: 10, day: 5),
+                date: Date.dateCreator(year: 2025, month: 9, day: 25),
                 durationMin: 45,
                 distanceKm: 8.5
             ),
             
-            // --- FORA DO FILTRO (> 60 dias) ---
-            // Setembro - Não deve aparecer em nenhum filtro atual
+            // --- 6 MESES (Visível em: 6M, 1Y) ---
+            // Datas em Junho, Julho, Agosto
             Run(
-                date: Date.dateCreator(year: 2025, month: 9, day: 15),
+                date: Date.dateCreator(year: 2025, month: 8, day: 10),
+                durationMin: 35,
+                distanceKm: 5.0
+            ),
+            Run(
+                date: Date.dateCreator(year: 2025, month: 7, day: 15), // Frio de Julho
+                durationMin: 60,
+                distanceKm: 10.5
+            ),
+            
+            // --- 1 ANO (Visível apenas em: 1Y) ---
+            // Datas no início de 2025
+            Run(
+                date: Date.dateCreator(year: 2025, month: 5, day: 20),
+                durationMin: 50,
+                distanceKm: 9.0
+            ),
+            Run(
+                date: Date.dateCreator(year: 2025, month: 2, day: 10), // Carnaval
                 durationMin: 45,
                 distanceKm: 7.0
+            ),
+            Run(
+                date: Date.dateCreator(year: 2025, month: 1, day: 5), // Começo do ano
+                durationMin: 30,
+                distanceKm: 5.0
+            ),
+            
+            // --- FORA DO FILTRO (Mais de 1 ano atrás) ---
+            // Serve para garantir que o filtro de ano está cortando certo
+            Run(
+                date: Date.dateCreator(year: 2024, month: 11, day: 1),
+                durationMin: 100,
+                distanceKm: 18.0
             )
         ]
     }
 }
+
 
 extension Run {
     var dateFormatted: String {
@@ -134,8 +165,13 @@ extension Run {
 
 extension Date {
     static func dateCreator(year: Int, month: Int, day: Int) -> Date {
-        Calendar.current.date(from: DateComponents(year: year, month: month, day: day))!
-    }
+            var components = DateComponents()
+            components.year = year
+            components.month = month
+            components.day = day
+            // Retorna a data ou "Hoje" caso falhe
+            return Calendar.current.date(from: components) ?? Date()
+        }
 }
 
 
