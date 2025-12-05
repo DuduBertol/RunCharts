@@ -48,9 +48,41 @@ extension Run {
             Run(durationMin: 60, distanceKm: 1),
         ]
     }
-}
-
-extension Run {
+    
+    static func mockExampleRuns() -> [Run] {
+        [
+            Run(
+                date: Date.dateCreator(year: 2025, month: 12, day: 1), 
+                durationMin: 45,
+                distanceKm: 8.0
+            ),
+            Run(
+                date: Date.dateCreator(year: 2025, month: 11, day: 29),
+                durationMin: 60,
+                distanceKm: 10.0
+            ),
+            Run(
+                date: Date.dateCreator(year: 2025, month: 11, day: 27),
+                durationMin: 30,
+                distanceKm: 5.0
+            ),
+            Run(
+                date: Date.dateCreator(year: 2025, month: 11, day: 20),
+                durationMin: 90, // Longão de feriado
+                distanceKm: 15.0
+            ),
+            Run(
+                date: Date.dateCreator(year: 2025, month: 11, day: 15),
+                durationMin: 50,
+                distanceKm: 9.0
+            ),
+            Run(
+                date: Date.dateCreator(year: 2025, month: 11, day: 8),
+                durationMin: 40,
+                distanceKm: 7.0
+            ),
+        ]
+    }
     
     static func mockArrayRuns() -> [Run] {
         [

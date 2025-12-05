@@ -161,7 +161,7 @@ struct GraphView: View {
             )
             .foregroundStyle(vm.selectedRunUnit.color)
             .symbolSize(40)
-            .accessibilityHidden(true) // O VoiceOver já lê esses valores através da Linha
+            .accessibilityHidden(true) // Escondemos para não duplicar a leitura
         }
         // --- EIXO X (Datas) ---
         .chartXAxis {
@@ -255,10 +255,5 @@ struct GraphView: View {
         .accessibilityLabel("\(semanticLabel)")
         .accessibilityValue("\(value) \(vm.selectedRunUnit.unit)")
     }
-}
-
-
-#Preview {
-    GraphView()
 }
 

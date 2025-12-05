@@ -150,13 +150,8 @@ struct ViewGraficosComFiltros: View {
                                 x: .value("Data", corrida.date),
                                 y: .value("Distância", corrida.distanceKm)
                             )
-                            .foregroundStyle(
-                                LinearGradient(
-                                    colors: [Color.blue.opacity(0.2), Color.blue.opacity(0.0)],
-                                    startPoint: .top,
-                                    endPoint: .bottom
-                                )
-                            )
+                            .foregroundStyle(.blue.opacity(0.25))
+                            .interpolationMethod(.catmullRom)
                             
                             PointMark(
                                 x: .value("Data", corrida.date),
