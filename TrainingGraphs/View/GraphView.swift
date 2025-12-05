@@ -13,7 +13,7 @@ import Charts
 struct GraphView: View {
     @Environment(\.modelContext) private var context
     
-//    @Query(sort: \Run.date) private var allRuns: [Run]
+    //    @Query(sort: \Run.date) private var allRuns: [Run]
     // Em produção, use @Query. Para teste, use o mock:
     let allRuns = Run.mockArrayRuns()
     
@@ -30,6 +30,7 @@ struct GraphView: View {
                     .font(.title)
                     .bold()
                     .foregroundStyle(.opacity(0.5))
+                    .accessibilityAddTraits(.isHeader)
                 
                 
                 VStack(spacing: 24){
@@ -40,9 +41,24 @@ struct GraphView: View {
                         }
                     }
                     .pickerStyle(.segmented)
+                    .accessibilityLabel("Time Interval")
                     
                     //MARK: - Date Navigator
                     DateRangeStepper(vm: vm)
+                        .accessibilityElement(children: .ignore)
+                        .accessibilityLabel("Selected Period")
+                        .accessibilityValue(vm.getDateRangeLabel())
+                        .accessibilityAdjustableAction { direction in
+                            switch direction {
+                            case .increment:
+                                vm.moveTimeRange(direction: 1)
+                            case .decrement:
+                                vm.moveTimeRange(direction: -1)
+                            @unknown default:
+                                break
+                            }
+                        }
+                        .accessibilityHint("Swipe up or down to change the period")
                     
                     //MARK: - Unit Selector
                     unitSelector
@@ -54,6 +70,8 @@ struct GraphView: View {
                         .frame(height: 280)
                 } else {
                     chartView(runs: currentRuns)
+                        .accessibilityLabel("Evolution graph by \(vm.selectedRunUnit.rawValue)")
+                        .accessibilityHint("Shows data for \(vm.getDateRangeLabel())")
                 }
                 
                 //MARK: - Stats
@@ -63,9 +81,19 @@ struct GraphView: View {
         }
     }
     
-    // MARK: - Subviews para organizar
+    // MARK: - Subviews
     
     var unitSelector: some View {
+        ViewThatFits(in: .horizontal) {
+            selectorButtons
+            
+            ScrollView(.horizontal, showsIndicators: false) {
+                selectorButtons
+            }
+        }
+    }
+    
+    var selectorButtons: some View {
         HStack(spacing: 12) {
             ForEach(RunUnits.allCases, id: \.self) { unit in
                 Button{
@@ -94,6 +122,8 @@ struct GraphView: View {
                     )
                 }
                 .buttonStyle(.plain)
+                .accessibilityLabel(unit.rawValue)
+                .accessibilityAddTraits(vm.selectedRunUnit == unit ? [.isButton, .isSelected] : [.isButton])
             }
         }
         .padding(.horizontal, 4)
@@ -101,64 +131,61 @@ struct GraphView: View {
     
     func chartView(runs: [Run]) -> some View {
         Chart(runs) { run in
-            // LINE
+            // 1. LINHA (Elemento Principal de Acessibilidade)
+            // Define a tendência e a "melodia" do gráfico
             LineMark(
-                x: .value("Date", run.date),
-                y: .value("Value", vm.selectedRunUnit.value(of: run))
+                x: .value("Date", run.date, unit: .day),
+                y: .value(vm.selectedRunUnit.rawValue, vm.selectedRunUnit.value(of: run))
             )
             .foregroundStyle(vm.selectedRunUnit.color)
             .lineStyle(StrokeStyle(lineWidth: 3))
             .interpolationMethod(.catmullRom)
+            // Acessibilidade: O que o VoiceOver lê quando o dedo passa aqui
+            .accessibilityLabel(run.date.formatted(date: .abbreviated, time: .omitted))
+            .accessibilityValue("\(vm.getValueForMetric(vm.selectedRunUnit.value(of: run))) \(vm.selectedRunUnit.unit)")
             
-            // AREA
+            // 2. ÁREA (Visual / Decorativo)
             AreaMark(
-                x: .value("Date", run.date),
+                x: .value("Date", run.date, unit: .day),
                 yStart: .value("Base", vm.getChartBaseline(for: runs)),
-                yEnd: .value("Value", vm.selectedRunUnit.value(of: run))
+                yEnd: .value(vm.selectedRunUnit.rawValue, vm.selectedRunUnit.value(of: run))
             )
-            .interpolationMethod(.catmullRom)
             .foregroundStyle(vm.selectedRunUnit.color.opacity(0.25))
+            .interpolationMethod(.catmullRom)
+            .accessibilityHidden(true) // Escondemos para não duplicar a leitura
             
-            // POINT
+            // 3. PONTOS (Marcadores Visuais)
             PointMark(
-                x: .value("Date", run.date),
-                y: .value("Value", vm.selectedRunUnit.value(of: run))
+                x: .value("Date", run.date, unit: .day),
+                y: .value(vm.selectedRunUnit.rawValue, vm.selectedRunUnit.value(of: run))
             )
             .foregroundStyle(vm.selectedRunUnit.color)
-            .symbolSize(40) // Reduzi um pouco o tamanho
+            .symbolSize(40)
+            .accessibilityHidden(true) // O VoiceOver já lê esses valores através da Linha
         }
-        // --- EIXO X DINÂMICO ---
+        // --- EIXO X (Datas) ---
         .chartXAxis {
             AxisMarks(values: .automatic) { value in
                 AxisGridLine()
                 AxisTick()
                 AxisValueLabel {
                     if let date = value.as(Date.self) {
-                        // Formatação condicional
                         switch vm.selectedTimeRange {
                         case .week:
-                            // Se for semana, mostra Dia da Semana (Seg, Ter)
                             VStack(spacing: 0) {
-                                Text(date, format: .dateTime.weekday(.abbreviated))
-                                    .font(.caption2)
-                                    .bold()
-                                Text(date, format: .dateTime.day())
-                                    .font(.caption2)
-                                    .foregroundStyle(.secondary)
+                                Text(date, format: .dateTime.weekday(.abbreviated)).bold()
+                                Text(date, format: .dateTime.day()).foregroundStyle(.secondary)
                             }
                         case .month, .threeMonths:
-                            // Se for Mês, mostra dia numérico (01, 05, 10)
                             Text(date, format: .dateTime.day())
-                                .font(.caption2)
                         case .sixMonths, .year:
-                            // Se for ano, mostra o Mês (Jan, Fev)
                             Text(date, format: .dateTime.month(.narrow))
-                                .font(.caption2)
                         }
                     }
                 }
             }
         }
+        // --- EIXO Y (Valores) ---
         .chartYAxis {
             AxisMarks(position: .leading) { value in
                 AxisGridLine()
@@ -171,31 +198,42 @@ struct GraphView: View {
                 }
             }
         }
+        // Configuração de Escala (inverte se for Pace, pois menor é melhor)
         .chartYScale(domain: .automatic(includesZero: false, reversed: vm.selectedRunUnit == .pace))
-        .frame(height: 250)
+        .frame(minHeight: 250)
+        
+        // --- Resumo Global para o VoiceOver ---
+        // Isso é o que é lido antes do usuário entrar no gráfico
+        .accessibilityLabel("Evolution Graph of \(vm.selectedRunUnit.rawValue)")
+        .accessibilityHint("Show data from \(vm.getDateRangeLabel()). Use the rotor to listen the Audio Graph")
     }
     
     func statsSection(runs: [Run]) -> some View {
-        ViewThatFits{
+        ViewThatFits {
             HStack(spacing: 16) {
-                statsView(title: "Avg", value: vm.calculateAverage(for: runs), icon: "chart.bar.fill")
-                statsView(title: "Best", value: vm.calculateBest(for: runs), icon: "trophy.fill")
-                statsView(title: "Last", value: vm.calculateLast(for: runs), icon: "clock.arrow.circlepath")
+                statsContent(runs: runs)
             }
             
             VStack(spacing: 16) {
-                statsView(title: "Avg", value: vm.calculateAverage(for: runs), icon: "chart.bar.fill")
-                statsView(title: "Best", value: vm.calculateBest(for: runs), icon: "trophy.fill")
-                statsView(title: "Last", value: vm.calculateLast(for: runs), icon: "clock.arrow.circlepath")
+                statsContent(runs: runs)
             }
         }
     }
     
-    func statsView(title: String, value: String, icon: String) -> some View {
+    @ViewBuilder
+    func statsContent(runs: [Run]) -> some View {
+        statsView(title: "Avg", value: vm.calculateAverage(for: runs), icon: "chart.bar.fill", semanticLabel: "Average")
+        statsView(title: "Best", value: vm.calculateBest(for: runs), icon: "trophy.fill", semanticLabel: "Best")
+        statsView(title: "Last", value: vm.calculateLast(for: runs), icon: "clock.arrow.circlepath", semanticLabel: "Last")
+        
+    }
+    
+    func statsView(title: String, value: String, icon: String, semanticLabel: String) -> some View {
         VStack(spacing: 8){
             Image(systemName: icon)
                 .font(.title3)
                 .foregroundStyle(vm.selectedRunUnit.color)
+                .accessibilityHidden(true)
             
             VStack(spacing: 2) {
                 Text(title)
@@ -214,6 +252,8 @@ struct GraphView: View {
         .background(vm.selectedRunUnit.color.opacity(0.1))
         .cornerRadius(12)
         .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(semanticLabel)")
+        .accessibilityValue("\(value) \(vm.selectedRunUnit.unit)")
     }
 }
 
@@ -221,3 +261,4 @@ struct GraphView: View {
 #Preview {
     GraphView()
 }
+
