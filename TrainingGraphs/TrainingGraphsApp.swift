@@ -10,11 +10,13 @@ import SwiftData
 
 @main
 struct TrainingGraphsApp: App {
+    
+    let container = DataController.shared.container
+    
     var body: some Scene {
         WindowGroup {
-//            ContentView()
             GraphView()
         }
-        .modelContainer(for: [Run.self])
+        .modelContainer(container)
     }
 }

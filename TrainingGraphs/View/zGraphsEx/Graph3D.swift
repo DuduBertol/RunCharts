@@ -5,6 +5,7 @@
 //  Created by Eduardo Bertol on 31/10/25.
 //
 
+/*
 import SwiftUI
 import Charts
 
@@ -26,3 +27,4 @@ struct Graph3D: View {
 #Preview {
     Graph3D()
 }
+*/
