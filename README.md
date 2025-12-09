@@ -1,8 +1,9 @@
+
 # 🏃‍♂️ Run Charts
 
-> **Acompanhe sua evolução na corrida de forma clara e acessível.**
+> **Your run evolution matters!**
 
-O **Run Charts** ajuda você a manter o registro de todas as suas corridas. Registre seus treinos, acompanhe seu progresso e visualize sua evolução de maneira didática através de gráficos detalhados.
+**Run Charts** helps you keep track of all your runs. Register your workouts, track your progress, and view your data together in a clear and didactic way through graphs.
 
 ---
 
@@ -14,35 +15,37 @@ O **Run Charts** ajuda você a manter o registro de todas as suas corridas. Regi
   <img src="https://github.com/user-attachments/assets/ea346d77-14b9-45a6-b861-2ba397a3a8c5" alt="Estatísticas Detalhadas" width="18%">
 </p>
 
-
 ---
 
-## 📱 Funcionalidades
+## 📱 Features
 
-### 📊 Acompanhamento Completo
-Visualize seus treinos através de gráficos interativos. Monitore métricas essenciais como:
-* **Distância** (km)
-* **Duração** (tempo)
-* **Ritmo** (Pace)
+### 📊 Comprehensive Tracking
+Visualize your runs through clear charts. Track essential metrics over different time periods (7D, 1M, 3M, 6M, 1Y):
+* **Distance**
+* **Duration**
+* **Pace**
 
-### 📈 Estatísticas (Stats)
-Tenha uma visão geral do seu desempenho com cartões de resumo que mostram sua **Média**, seu **Melhor Tempo** e seu **Último Treino**.
+### 📈 Your Stats
+Get a quick overview of your performance with specific cards for:
+* **Average** performance
+* **Best** results
+* **Last** run details
 
-### 🗣️ Integração com a Siri
-Registre suas corridas rapidamente e sem interrupções usando apenas o poder da sua voz.
+### 🗣️ Siri Integration
+Log your runs quickly and with no interruptions using the power of your voice.
 > *"What's the Distance?"*
 
-### ♿ Acessibilidade em Primeiro Lugar
-O Run Charts foi desenvolvido para garantir uma experiência acessível para todos, incluindo recursos nativos como:
-* **Audio Graphs** (Gráficos em áudio)
-* **High Contrast Interface** (Interface de Alto Contraste)
-* **Dynamic Type** (Tipografia Dinâmica)
+### ♿ Accessibility First
+Run Charts includes features ensuring an accessible experience for everyone, such as:
+* **Audio Graphs**
+* **High Contrast Interface**
+* **Dynamic Typing**
 
 ---
 
-## 📥 Baixe Agora
+## 📥 Download
 
-Comece a transformar seus dados de corrida em evolução.
+Start tracking your progress today.
 
 [![Download on the App Store](https://img.shields.io/badge/Download_on_the-App_Store-black?style=for-the-badge&logo=apple)](https://apps.apple.com/br/app/run-charts/id6755115166?l=en-GB)
 
